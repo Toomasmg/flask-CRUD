@@ -8,3 +8,7 @@ client = Blueprint('client', __name__)
 def get_client():
     clients = Client.query.all()
     return jsonify([client.serialize() for client in clients])
+
+@client.route('/api/add-client')
+def add_client():
+    return 'Add Client'
