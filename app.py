@@ -18,7 +18,7 @@ db.init_app(app)
 with app.app_context():
     from models.client import Client
     from models.products import Products
-    db.drop_all()
+    # db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':

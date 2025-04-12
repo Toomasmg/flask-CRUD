@@ -1,9 +1,10 @@
 from sqlalchemy.exc import IntegrityError
 from flask import Blueprint, jsonify, request
-from models import db
+from models.db import db
 from models.client import Client
 
 client = Blueprint('client', __name__)
+
 
 
 @client.route('/api/clients')
@@ -15,16 +16,15 @@ def get_client():
 @client.route('/api/add_client', methods=['POST'])
 def add_client():
     data = request.get_json()
-
+    
     if not data or not all(key in data for key in ['name', 'email', 'phone']):
         return jsonify({'error': 'Faltan datos requeridos'}), 400
 
     try:
-        print(f"Datos recibidos: {data}")
+        print(f"Datos recibidos: {data}")  # Ver qué datos llegan
 
         new_client = Client(data['name'], data['email'], data['phone'])
-        print(
-            f"Creando cliente: {new_client.name}, {new_client.email}, {new_client.phone}")
+        print(f"Creando cliente: {new_client.name}, {new_client.email}, {new_client.phone}")
 
         db.session.add(new_client)
         db.session.commit()
@@ -37,9 +37,22 @@ def add_client():
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error inesperado: {e}")  #
+        print(f"Error inesperado: {e}")  # Ver el error en la terminal
         return jsonify({'error': 'Error al agregar el cliente'}), 500
 
+@client.route("/api/del_client/<int:id>", methods=['DELETE'])
+def delete_client(id):
+    client = Client.query.get(id)
+    
+    if not client: 
+        return jsonify({'message':'Cliente not found'}), 404 
+    try:
+        db.session.delete(client)
+        db.session.commit()
+        return jsonify({'message': 'Client delete successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error':str(e)}), 500
 
 @client.route('/api/up_client/<int:id>', methods=['PUT'])
 def update_cliente(id):
@@ -47,13 +60,13 @@ def update_cliente(id):
     data = request.get_json()
 
     if not data:
-        return jsonify({'error': 'No se recibieron datos'}, 400)
-
+        return jsonify({'error':'No se recibieron datos'}, 400)
+    
     client = Client.query.get(id)
 
     if not client:
         return jsonify({'error': 'Cliente no encontrado'}), 404
-
+    
     try:
         if "name" in data:
             client.name = data['name']
@@ -64,11 +77,11 @@ def update_cliente(id):
 
         db.session.commit()
 
-        return jsonify({'message': 'Cliente actulizado correctamente', 'client': client.serialize()}), 200
+        return jsonify({'message':'Cliente actulizado correctamente', 'client': client.serialize()}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
-
+    
 
 @client.route('/api/update_client/<int:id>', methods=['PATCH'])
 def patch_client(id):
@@ -78,7 +91,7 @@ def patch_client(id):
         return jsonify({'error': 'No se recibieron datos'}), 400
 
     client = Client.query.get(id)
-
+    
     if not client:
         return jsonify({'error': 'Cliente no encontrado'}), 404
 
@@ -93,6 +106,7 @@ def patch_client(id):
         db.session.commit()
         return jsonify({'message': 'Cliente actualizado correctamente', 'client': client.serialize()}), 200
 
+   
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
